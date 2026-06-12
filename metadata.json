@@ -1,0 +1,6 @@
+{
+  "name": "A2A Curriculum Reconstruction Engine",
+  "description": "Dismantles and rebuilds textbook chapters into a structured, logically inevitable curriculum following the Axiom-to-Application (A2A) educational framework.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
