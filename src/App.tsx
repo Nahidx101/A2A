@@ -60,12 +60,12 @@ function RenderMath({ text, className = '' }: { text: string; className?: string
             return (
               <span 
                 key={index} 
-                className="block my-6 overflow-x-auto text-center font-serif text-slate-950 bg-slate-50 border border-slate-350 p-4 rounded-md text-[1.125em] sm:text-[1.25em] md:text-[1.325em] shadow-sm leading-relaxed" 
+                className="block my-5 overflow-x-auto text-center font-serif text-black text-[1.125em] sm:text-[1.2em] leading-relaxed py-1" 
                 dangerouslySetInnerHTML={{ __html: html }} 
               />
             );
           } catch (err) {
-            return <code key={index} className="text-red-600 block">{part}</code>;
+            return <code key={index} className="text-red-600 block my-2">{part}</code>;
           }
         } else if (part.startsWith('$') && part.endsWith('$')) {
           const formula = part.slice(1, -1).trim();
@@ -74,12 +74,12 @@ function RenderMath({ text, className = '' }: { text: string; className?: string
             return (
               <span 
                 key={index} 
-                className="inline-block px-1.5 max-w-full overflow-x-auto align-middle font-serif text-slate-950 font-bold text-[1.15em] sm:text-[1.2em]" 
+                className="inline font-serif text-black text-[1.05em] sm:text-[1.1em] align-baseline" 
                 dangerouslySetInnerHTML={{ __html: html }} 
               />
             );
           } catch (err) {
-            return <code key={index} className="text-red-700">{part}</code>;
+            return <code key={index} className="text-red-750 px-1">{part}</code>;
           }
         }
         
@@ -1013,9 +1013,9 @@ export default function App() {
 
                 {/* Level Title Segment */}
                 <div className="border-b-2 border-slate-900 pb-3">
-                  <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-sky-600 font-bold bg-slate-100 px-2 py-1 rounded">LEVEL {activeLevel.levelNumber}</span>
-                  <h3 className="text-3.5xl font-serif italic font-light text-slate-950 mt-2">{activeLevel.levelName}</h3>
-                  <p className="text-[9px] font-mono text-slate-400 uppercase tracking-[0.3em] mt-1.5">
+                  <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-stone-600 font-bold border border-stone-300 px-3 py-1 rounded">LEVEL {activeLevel.levelNumber}</span>
+                  <h3 className="text-3.5xl font-serif italic font-light text-black mt-2">{activeLevel.levelName}</h3>
+                  <p className="text-[9px] font-mono text-stone-400 uppercase tracking-[0.3em] mt-1.5">
                     A2A-DOC COMPLETED FRAME / ID: {selectedCurriculum.id}-{activeLevel.levelNumber}
                   </p>
                 </div>
@@ -1023,72 +1023,72 @@ export default function App() {
                 {/* TAB SECTION: AXIOMATIC BRIDGE */}
                 {selectedTab === 'bridge' && activeLevel.levelNumber > 1 && activeLevel.axiomaticBridge && (
                   <section className="space-y-6 animate-fade-in">
-                    <div className="flex items-center gap-2 text-slate-450 border-b border-dashed border-slate-200 pb-2">
-                      <BookmarkCheck className="text-slate-900" size={18} />
+                    <div className="flex items-center gap-2 text-stone-500 border-b border-dashed border-stone-200 pb-2">
+                      <BookmarkCheck className="text-stone-900" size={18} />
                       <h4 className="text-xs font-mono uppercase tracking-widest font-bold">MANDATORY AXIOMATIC BRIDGE</h4>
                     </div>
 
-                    <div className="bg-slate-50 border-l-4 border-slate-900 p-6 space-y-4 rounded-r-md">
+                    <div className="bg-white space-y-8 py-2">
                       <div>
-                        <span className="text-xs font-mono font-bold text-slate-500 uppercase">1. Previous Level Conclusion</span>
-                        <div className="text-base md:text-lg leading-relaxed text-slate-900 mt-2 font-sans">
+                        <span className="text-xs font-mono font-bold text-stone-500 uppercase tracking-wider">1. Previous Level Conclusion</span>
+                        <div className="text-base md:text-lg leading-relaxed text-stone-900 mt-2 font-serif">
                           <RenderMath text={activeLevel.axiomaticBridge.previousLevelConclusion} />
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200 pt-4">
-                        <span className="text-xs font-mono font-bold text-slate-500 uppercase">2. The Boundary Constraint or Edge Case</span>
-                        <div className="text-base md:text-lg leading-relaxed text-red-900 font-semibold bg-red-50/50 p-3 rounded border border-red-100 mt-2 font-sans">
+                      <div className="border-t border-stone-200 pt-6">
+                        <span className="text-xs font-mono font-bold text-rose-700 uppercase tracking-wider">2. The Boundary Constraint or Edge Case</span>
+                        <div className="text-base md:text-lg leading-relaxed text-rose-950 mt-2 font-serif italic">
                           <RenderMath text={activeLevel.axiomaticBridge.limitationOrEdgeCase} />
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200 pt-4">
-                        <span className="text-xs font-mono font-bold text-slate-500 uppercase">3. Logical Inevitability of New Concept</span>
-                        <div className="text-base md:text-lg leading-relaxed italic text-slate-950 mt-2 bg-sky-50/50 p-3 rounded border border-sky-100 font-sans font-medium">
+                      <div className="border-t border-stone-200 pt-6">
+                        <span className="text-xs font-mono font-bold text-stone-600 uppercase tracking-wider">3. Logical Inevitability of New Concept</span>
+                        <div className="text-base md:text-lg leading-relaxed italic text-stone-900 mt-2 font-serif">
                           <RenderMath text={activeLevel.axiomaticBridge.logicalInevitabilityOfNewConcept} />
                         </div>
                       </div>
                     </div>
-                </section>
-              )}
+                  </section>
+                )}
 
-              {/* TAB SECTION: PHASE 1 (ATOMIC CONCEPTS) */}
-              {selectedTab === 'phase1' && (
+                {/* TAB SECTION: PHASE 1 (ATOMIC CONCEPTS) */}
+                {selectedTab === 'phase1' && (
                 <section className="space-y-8 animate-fade-in">
-                  <div className="flex items-center gap-2 text-slate-450 border-b border-dashed border-slate-200 pb-2">
-                    <Cpu size={18} className="text-slate-950" />
-                    <h4 className="text-xs font-mono uppercase tracking-widest font-bold">PHASE 1: AXIOMATIC SETUP + SOCRATIC EXPLORATION</h4>
+                  <div className="flex items-center gap-2 text-stone-500 border-b border-dashed border-stone-200 pb-2">
+                    <Cpu size={18} className="text-stone-950" />
+                    <h4 className="text-xs font-mono uppercase tracking-widest font-bold text-stone-900">PHASE 1: AXIOMATIC SETUP + SOCRATIC EXPLORATION</h4>
                   </div>
 
                   <div className="space-y-12">
                     {activeLevel.phase1.atomicConcepts.map((concept, cIdx) => (
-                      <div key={concept.id} className="space-y-5 border border-slate-200 rounded p-6 shadow-sm hover:shadow-md transition bg-white">
+                      <div key={concept.id} className="py-8 border-b border-stone-200/85 last:border-0 bg-white space-y-6">
                         
                         {/* Concept Header */}
-                        <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
-                          <span className="w-8 h-8 rounded bg-slate-900 text-white font-mono text-sm flex items-center justify-center shrink-0 font-bold">
+                        <div className="flex items-start gap-3 border-b border-stone-100 pb-4">
+                          <span className="w-8 h-8 rounded-full border border-stone-300 text-stone-900 font-serif text-sm flex items-center justify-center shrink-0 font-bold select-none">
                             {activeLevel.levelNumber}.{cIdx + 1}
                           </span>
                           <div>
-                            <h5 className="text-base sm:text-lg md:text-xl font-bold text-slate-950 font-sans tracking-tight">
+                            <h5 className="text-lg sm:text-xl md:text-2xl font-bold text-stone-905 font-serif tracking-tight">
                               <RenderMath text={concept.conceptName} />
                             </h5>
-                            <div className="text-sm sm:text-base text-sky-800 italic mt-1 font-sans font-medium">
+                            <div className="text-sm sm:text-base text-stone-605 italic mt-1 font-serif">
                               <RenderMath text={concept.socraticQuestion} />
                             </div>
                           </div>
                         </div>
 
                         {/* Honest Reasoning Journey */}
-                        <div className="space-y-4 pl-4 border-l-2 border-slate-300">
-                          <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider font-extrabold mb-1 block">Deductive Socratic Progress</span>
+                        <div className="space-y-4 pl-4 border-l-2 border-stone-300">
+                          <span className="text-[11px] font-mono text-stone-500 uppercase tracking-wider font-extrabold mb-1 block">Deductive Socratic Progress</span>
                           <div className="space-y-3.5">
                             {concept.honestReasoning.map((step, sIdx) => {
                               // Highlighting false turns in deduction
                               const isWrongTurn = step.toLowerCase().includes('wrong') || step.toLowerCase().includes('wait,') || step.toLowerCase().includes('collapse') || step.toLowerCase().includes('failed');
                               return (
-                                <div key={sIdx} className={`text-[15px] sm:text-[16px] leading-relaxed ${isWrongTurn ? 'text-red-900 font-sans italic bg-red-50/55 px-4 py-3 border-l-4 border-red-400 rounded-r shadow-xs' : 'text-slate-800 font-sans'}`}>
+                                <div key={sIdx} className={`text-[15px] sm:text-[16px] leading-relaxed font-serif ${isWrongTurn ? 'text-red-900 italic bg-red-50/40 px-3 py-2 border-l-2 border-red-400 rounded-r' : 'text-stone-900'}`}>
                                   <RenderMath text={step} />
                                 </div>
                               );
@@ -1097,35 +1097,35 @@ export default function App() {
                         </div>
 
                         {/* Formal Mathematical definition */}
-                        <div className="bg-stone-50 border-l-4 border-slate-900 p-5 rounded-r my-4 space-y-2.5 shadow-sm">
-                          <p className="text-[11px] text-slate-500 uppercase tracking-widest font-black">FORMAL MATHEMATICAL DEFINITION</p>
-                          <div className="leading-relaxed font-serif text-slate-950 text-base sm:text-lg font-medium">
+                        <div className="border-l-2 border-stone-850 pl-5 my-6 space-y-2.5 bg-white">
+                          <p className="text-[11px] text-stone-500 uppercase tracking-widest font-bold font-mono">Definition {activeLevel.levelNumber}.{cIdx + 1}</p>
+                          <div className="leading-relaxed font-serif text-stone-950 text-base sm:text-lg font-normal italic">
                             <RenderMath text={concept.formalDefinition} />
                           </div>
                         </div>
 
                         {/* Text-based Scaffolding visualizer */}
                         {concept.scaffolding && concept.scaffolding.length > 0 && (
-                          <div className="space-y-3">
-                            <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider font-extrabold block">Text-Based Visual Scaffolding</span>
+                          <div className="space-y-4 pt-2">
+                            <span className="text-[11px] font-mono text-stone-500 uppercase tracking-wider font-extrabold block">Text-Based Visual Scaffolding</span>
                             
                             {concept.scaffolding.map((scaff, scIdx) => (
-                              <div key={scIdx} className="border border-slate-205 bg-slate-50/50 rounded-lg p-5 font-mono text-xs">
-                                <div className="flex justify-between items-center text-[10.5px] text-slate-500 capitalize border-b border-slate-200 pb-1.5 mb-3 font-bold">
+                              <div key={scIdx} className="border-t border-stone-150 py-4 font-serif text-sm">
+                                <div className="flex justify-between items-center text-[10px] text-stone-500 uppercase tracking-widest font-mono pb-1.5 mb-2 font-bold">
                                   <span>{scaff.title}</span>
-                                  <span className="bg-slate-900 text-white px-2 py-0.5 rounded text-[9px] font-bold tracking-wider">{scaff.type.replace('_', ' ')}</span>
+                                  <span className="border border-stone-300 text-stone-600 px-2 py-0.5 rounded text-[9px] font-bold tracking-wider">{scaff.type.replace('_', ' ')}</span>
                                 </div>
 
                                 {scaff.type === 'coordinate_table' ? (
-                                  <div className="whitespace-pre-wrap leading-relaxed font-mono text-xs sm:text-sm bg-white p-3 border border-slate-200 overflow-x-auto rounded-md shadow-xs">
+                                  <div className="whitespace-pre-wrap leading-relaxed font-mono text-xs sm:text-sm bg-white p-3 border border-stone-200 overflow-x-auto rounded">
                                     <RenderMath text={scaff.content} />
                                   </div>
                                 ) : scaff.type === 'numerical_sequence' ? (
-                                  <div className="bg-white p-3 border border-slate-200 rounded-md text-slate-850 leading-relaxed font-mono text-xs sm:text-sm shadow-xs">
+                                  <div className="bg-white p-3 border border-stone-200 rounded text-stone-850 leading-relaxed font-mono text-xs sm:text-sm">
                                     <RenderMath text={scaff.content} />
                                   </div>
                                 ) : (
-                                  <blockquote className="my-1 border-l-4 border-slate-350 bg-white p-4 italic text-slate-800 leading-relaxed text-sm sm:text-[15px] rounded-r-md shadow-xs">
+                                  <blockquote className="my-1 border-l-2 border-stone-400 bg-white p-4 italic text-stone-800 leading-relaxed text-sm sm:text-[15px] rounded-r">
                                     <RenderMath text={scaff.content} />
                                   </blockquote>
                                 )}
@@ -1136,23 +1136,23 @@ export default function App() {
 
                       </div>
                     ))}
-                    </div>
-                  </section>
-                )}
+                  </div>
+                </section>
+              )}
 
                 {/* TAB SECTION: PHASE 2 (ABSTRACT CONCEPTUAL TRIALS) */}
                 {selectedTab === 'phase2' && (
                   <section className="space-y-8 animate-fade-in">
-                    <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-2.5">
+                    <div className="flex items-center justify-between border-b border-stone-200 pb-2.5">
                       <div className="flex items-center gap-2">
-                        <Hash size={18} className="text-slate-950" />
-                        <h4 className="text-xs font-mono uppercase tracking-widest font-bold">PHASE 2: ABSTRACT CONCEPTUAL TRIALS</h4>
+                        <Hash size={18} className="text-stone-900" />
+                        <h4 className="text-xs font-mono uppercase tracking-widest font-bold text-stone-900">PHASE 2: ABSTRACT CONCEPTUAL TRIALS</h4>
                       </div>
-                      <span className="text-[10px] font-mono bg-slate-900 text-white px-2 py-0.5 rounded">STRICTLY 10 PROBLEMS</span>
+                      <span className="text-[10px] font-mono border border-stone-300 text-stone-600 px-2 py-0.5 rounded">STRICTLY 10 PROBLEMS</span>
                     </div>
 
-                    <div className="bg-slate-50 p-4 border rounded font-mono text-xs text-slate-600 leading-relaxed space-y-1">
-                      <p className="font-bold text-slate-900 border-b border-slate-200 pb-1 uppercase text-[10px]">Logical Guidelines</p>
+                    <div className="bg-white p-5 border border-stone-200 rounded font-serif text-sm text-stone-700 leading-relaxed space-y-1.5 shadow-none animate-fade-in">
+                      <p className="font-serif font-bold text-stone-900 border-b border-stone-150 pb-1 uppercase text-[11px] tracking-wider">Methodological Guidelines</p>
                       <p>• Zero physical/real-world context mapping.</p>
                       <p>• Pure structural system relations and coordinate logical spaces.</p>
                       <p>• Demands analytical integration of all levels simultaneously.</p>
@@ -1160,18 +1160,18 @@ export default function App() {
 
                     <div className="space-y-6">
                       {activeLevel.phase2.problems.map((prob) => (
-                        <div key={prob.id} className="pb-6 border-b border-stone-200/60 last:border-0 space-y-2">
+                        <div key={prob.id} className="pb-6 border-b border-stone-200/65 last:border-0 space-y-2">
                           <div className="flex items-start gap-3">
                             <span className="font-serif font-bold text-stone-900 shrink-0 select-none text-base">
                               Problem {activeLevel.levelNumber}.{prob.id < 10 ? '0' + prob.id : prob.id}
                             </span>
-                            <div className="text-base sm:text-[16.5px] leading-relaxed text-stone-904 font-serif">
+                            <div className="text-base sm:text-[16.5px] leading-relaxed text-stone-900 font-serif">
                               <RenderMath text={prob.problemText} />
                             </div>
                           </div>
                           {prob.logicalCore && (
-                            <div className="pl-6 text-[11px] font-mono tracking-wide text-slate-500 uppercase flex items-center gap-1">
-                              <span className="font-semibold text-slate-400">Core Constraint:</span>
+                            <div className="pl-6 text-[11px] font-mono tracking-wide text-stone-500 uppercase flex items-center gap-1">
+                              <span className="font-semibold text-stone-400">Core Constraint:</span>
                               <RenderMath text={prob.logicalCore} />
                             </div>
                           )}
@@ -1184,18 +1184,18 @@ export default function App() {
                 {/* TAB SECTION: PHASE 3 (DEEP REAL-WORLD SYSTEM APPLICATION) */}
                 {selectedTab === 'phase3' && (
                   <section className="space-y-8 animate-fade-in">
-                    <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-2.5">
+                    <div className="flex items-center justify-between border-b border-stone-205 pb-2.5">
                       <div className="flex items-center gap-2">
-                        <Sparkles size={18} className="text-slate-950" />
-                        <h4 className="text-xs font-mono uppercase tracking-widest font-bold">PHASE 3: DEEP COGNITIVE APPLICATION</h4>
+                        <Sparkles size={18} className="text-stone-900" />
+                        <h4 className="text-xs font-mono uppercase tracking-widest font-bold text-stone-900">PHASE 3: DEEP COGNITIVE APPLICATION</h4>
                       </div>
-                      <span className="text-[10px] font-mono bg-slate-900 text-white px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-mono border border-stone-300 text-stone-600 px-2 py-0.5 rounded">
                         {(activeLevel.levelNumber - 1) * 5 + 10} PROBLEMS FOR L{activeLevel.levelNumber}
                       </span>
                     </div>
 
-                    <div className="bg-slate-50 p-4 border rounded font-mono text-xs text-slate-600 leading-relaxed space-y-1">
-                      <p className="font-bold text-slate-900 border-b border-slate-200 pb-1 uppercase text-[10px]">Applied Constraints</p>
+                    <div className="bg-white p-5 border border-stone-200 rounded font-serif text-sm text-stone-700 leading-relaxed space-y-1.5 shadow-none animate-fade-in">
+                      <p className="font-serif font-bold text-stone-900 border-b border-stone-150 pb-1 uppercase text-[11px] tracking-wider">Applied Guidelines</p>
                       <p>• Mathematical depth stems purely from logical multi-coordinate constraints.</p>
                       <p>• Physical premise is simplified and understandable by a non-expert instantly.</p>
                       <p>• Zero heavy background technical domain jargon bottlenecks.</p>
@@ -1205,14 +1205,14 @@ export default function App() {
                       {activeLevel.phase3.problems.map((prob) => (
                         <div key={prob.id} className="pb-10 border-b border-stone-200 last:border-0 space-y-4">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono tracking-widest uppercase font-bold text-slate-500">Problem {activeLevel.levelNumber}.{prob.id < 10 ? '0' + prob.id : prob.id}</span>
+                            <span className="text-xs font-mono tracking-widest uppercase font-bold text-stone-500">Problem {activeLevel.levelNumber}.{prob.id < 10 ? '0' + prob.id : prob.id}</span>
                           </div>
 
                           <div className="text-base sm:text-[17px] text-stone-900 font-serif leading-relaxed font-normal">
                             <RenderMath text={prob.scenario} />
                           </div>
 
-                          <div className="bg-stone-50/50 border-l-2 border-stone-300 pl-4 py-1.5 space-y-1.5 my-3">
+                          <div className="bg-transparent border-l-2 border-stone-300 pl-4 py-1.5 space-y-1.5 my-3">
                             <span className="text-[10px] font-mono font-bold text-stone-500 uppercase tracking-widest block">System Constraints</span>
                             <ul className="list-disc pl-4 space-y-1 text-sm sm:text-[14.5px] text-stone-800 font-serif font-light">
                               {prob.constraints.map((constraint, conIdx) => (
@@ -1223,9 +1223,9 @@ export default function App() {
                             </ul>
                           </div>
 
-                          <div className="text-[15.5px] sm:text-[16.5px] font-serif font-bold italic text-slate-950 leading-relaxed pt-1 flex items-start gap-1">
-                            <span className="text-slate-500 shrink-0 not-italic uppercase font-mono text-[11px] tracking-wider mt-1 mr-1">Query:</span>
-                            <div className="flex-1 text-slate-950">
+                          <div className="text-[15.5px] sm:text-[16.5px] font-serif font-bold italic text-stone-950 leading-relaxed pt-1 flex items-start gap-1">
+                            <span className="text-stone-505 shrink-0 not-italic uppercase font-mono text-[11px] tracking-wider mt-1 mr-1">Query:</span>
+                            <div className="flex-1 text-stone-900">
                               <RenderMath text={prob.problemText} />
                             </div>
                           </div>
