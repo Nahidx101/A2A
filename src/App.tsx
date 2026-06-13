@@ -5,6 +5,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { jsPDF } from 'jspdf';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 import { 
   BookOpen, 
   Upload, 
@@ -28,6 +30,65 @@ import {
 } from 'lucide-react';
 import { A2ACurriculum, A2ALevel, UserAnswerStore } from './types';
 import { sampleCurriculums } from './data/sampleCurriculums';
+
+// Helper to sanitize and format legacy/plain-text mathematical expressions (theta, Delta, multiplication)
+function formatPlainMathSymbols(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/\bthetaa\b/gi, 'θ')
+    .replace(/\btheta\b/gi, 'θ')
+    .replace(/\bDelta\b/g, 'Δ')
+    .replace(/\bpi\b/g, 'π')
+    .replace(/\s*!=\s*/g, ' ≠ ')
+    .replace(/(?<=\d)\s*\*\s*(?=\d)/g, ' × '); // Replace numeric asterisk multiplication with professional cross
+}
+
+// Custom renderer component that parses mixed text / LaTeX blocks
+function RenderMath({ text, className = '' }: { text: string; className?: string }) {
+  if (!text) return null;
+
+  // Split text into non-math, inline math ($...$), and block math ($$...$$)
+  const parts = text.split(/(\$\$.*?\$\$|\$.*?\$)/gs);
+
+  return (
+    <span className={className}>
+      {parts.map((part, index) => {
+        if (part.startsWith('$$') && part.endsWith('$$')) {
+          const formula = part.slice(2, -2).trim();
+          try {
+            const html = katex.renderToString(formula, { displayMode: true, throwOnError: false });
+            return (
+              <span 
+                key={index} 
+                className="block my-6 overflow-x-auto text-center font-serif text-slate-950 bg-slate-50 border border-slate-350 p-4 rounded-md text-[1.125em] sm:text-[1.25em] md:text-[1.325em] shadow-sm leading-relaxed" 
+                dangerouslySetInnerHTML={{ __html: html }} 
+              />
+            );
+          } catch (err) {
+            return <code key={index} className="text-red-600 block">{part}</code>;
+          }
+        } else if (part.startsWith('$') && part.endsWith('$')) {
+          const formula = part.slice(1, -1).trim();
+          try {
+            const html = katex.renderToString(formula, { displayMode: false, throwOnError: false });
+            return (
+              <span 
+                key={index} 
+                className="inline-block px-1.5 max-w-full overflow-x-auto align-middle font-serif text-slate-950 font-bold text-[1.15em] sm:text-[1.2em]" 
+                dangerouslySetInnerHTML={{ __html: html }} 
+              />
+            );
+          } catch (err) {
+            return <code key={index} className="text-red-700">{part}</code>;
+          }
+        }
+        
+        // Render formatted plain text with replaced unicode characters for backwards-compatibility
+        return <span key={index}>{formatPlainMathSymbols(part)}</span>;
+      })}
+    </span>
+  );
+}
 
 export default function App() {
   // Lists of curriculums (preloaded samples + fetched custom ones)
@@ -969,111 +1030,119 @@ export default function App() {
 
                     <div className="bg-slate-50 border-l-4 border-slate-900 p-6 space-y-4 rounded-r-md">
                       <div>
-                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">1. Previous Level Conclusion</span>
-                        <p className="text-sm leading-relaxed text-slate-800 mt-1">{activeLevel.axiomaticBridge.previousLevelConclusion}</p>
-                      </div>
-
-                      <div className="border-t border-slate-200 pt-4">
-                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">2. The Boundary Constraint or Edge Case</span>
-                        <p className="text-sm leading-relaxed text-slate-800 mt-1 font-semibold text-red-800 bg-red-50/50 p-2.5 rounded border border-red-100">
-                          {activeLevel.axiomaticBridge.limitationOrEdgeCase}
-                        </p>
-                      </div>
-
-                      <div className="border-t border-slate-200 pt-4">
-                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">3. Logical Inevitability of New Concept</span>
-                        <p className="text-sm leading-relaxed italic text-slate-700 mt-1 bg-sky-50/50 p-2.5 rounded border border-sky-100">
-                          {activeLevel.axiomaticBridge.logicalInevitabilityOfNewConcept}
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-                )}
-
-                {/* TAB SECTION: PHASE 1 (ATOMIC CONCEPTS) */}
-                {selectedTab === 'phase1' && (
-                  <section className="space-y-8 animate-fade-in">
-                    <div className="flex items-center gap-2 text-slate-450 border-b border-dashed border-slate-200 pb-2">
-                      <Cpu size={18} className="text-slate-950" />
-                      <h4 className="text-xs font-mono uppercase tracking-widest font-bold">PHASE 1: AXIOMATIC SETUP + SOCRATIC EXPLORATION</h4>
-                    </div>
-
-                    <div className="space-y-12">
-                      {activeLevel.phase1.atomicConcepts.map((concept, cIdx) => (
-                        <div key={concept.id} className="space-y-4 border border-slate-200 rounded p-6 shadow-sm hover:shadow-md transition">
-                          
-                          {/* Concept Header */}
-                          <div className="flex items-start gap-2.5 border-b border-slate-100 pb-2.5">
-                            <span className="w-6 h-6 rounded bg-slate-900 text-white font-mono text-xs flex items-center justify-center shrink-0">
-                              {activeLevel.levelNumber}.{cIdx + 1}
-                            </span>
-                            <div>
-                              <h5 className="text-sm font-bold text-slate-900 uppercase font-mono tracking-wider">{concept.conceptName}</h5>
-                              <p className="text-xs text-sky-700 italic font-mono mt-0.5">{concept.socraticQuestion}</p>
-                            </div>
-                          </div>
-
-                          {/* Honest Reasoning Journey */}
-                          <div className="space-y-3 pl-3 border-l-2 border-slate-200">
-                            <span className="text-[9px] font-mono text-slate-405 uppercase tracking-wider font-bold">Deductive Socratic Progress</span>
-                            <div className="space-y-2.5">
-                              {concept.honestReasoning.map((step, sIdx) => {
-                                // Highlighting false turns in deduction
-                                const isWrongTurn = step.toLowerCase().includes('wrong') || step.toLowerCase().includes('wait,') || step.toLowerCase().includes('collapse');
-                                return (
-                                  <p key={sIdx} className={`text-xs leading-relaxed ${isWrongTurn ? 'text-red-700 font-mono italic bg-red-50/50 p-1.5 rounded' : 'text-slate-700'}`}>
-                                    {step}
-                                  </p>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Formal Mathematical definition */}
-                          <div className="bg-slate-900 text-slate-200 p-4 rounded-md font-mono text-xs space-y-1 my-3">
-                            <p className="text-[9px] text-sky-400 uppercase tracking-widest font-bold">FORMAL MATHEMATICAL DEFINITION</p>
-                            <p className="leading-relaxed font-light">{concept.formalDefinition}</p>
-                          </div>
-
-                          {/* Text-based Scaffolding visualizer */}
-                          {concept.scaffolding && concept.scaffolding.length > 0 && (
-                            <div className="space-y-3">
-                              <span className="text-[9px] font-mono text-slate-405 uppercase tracking-wider font-bold">Text-Based Visual Scaffolding</span>
-                              
-                              {concept.scaffolding.map((scaff, scIdx) => (
-                                <div key={scIdx} className="border border-slate-200 bg-slate-50/50 rounded p-4 font-mono text-xs">
-                                  <div className="flex justify-between items-center text-[10px] text-slate-400 capitalize border-b border-slate-200 pb-1.5 mb-2 font-bold">
-                                    <span>{scaff.title}</span>
-                                    <span className="bg-slate-900 text-white px-1 rounded text-[8px]">{scaff.type.replace('_', ' ')}</span>
-                                  </div>
-
-                                  {scaff.type === 'coordinate_table' ? (
-                                    <pre className="whitespace-pre-wrap leading-relaxed font-mono text-[11px] bg-white p-2.5 border border-slate-200 overflow-x-auto rounded">
-                                      {scaff.content}
-                                    </pre>
-                                  ) : scaff.type === 'numerical_sequence' ? (
-                                    <div className="bg-white p-2.5 border border-slate-200 rounded text-slate-700 leading-relaxed font-mono">
-                                      {scaff.content}
-                                    </div>
-                                  ) : (
-                                    <blockquote className="my-1 border-l-4 border-slate-300 pl-3 italic text-slate-600 leading-relaxed text-xs">
-                                      {scaff.content}
-                                    </blockquote>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
+                        <span className="text-xs font-mono font-bold text-slate-500 uppercase">1. Previous Level Conclusion</span>
+                        <div className="text-base md:text-lg leading-relaxed text-slate-900 mt-2 font-sans">
+                          <RenderMath text={activeLevel.axiomaticBridge.previousLevelConclusion} />
                         </div>
-                      ))}
+                      </div>
+
+                      <div className="border-t border-slate-200 pt-4">
+                        <span className="text-xs font-mono font-bold text-slate-500 uppercase">2. The Boundary Constraint or Edge Case</span>
+                        <div className="text-base md:text-lg leading-relaxed text-red-900 font-semibold bg-red-50/50 p-3 rounded border border-red-100 mt-2 font-sans">
+                          <RenderMath text={activeLevel.axiomaticBridge.limitationOrEdgeCase} />
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-200 pt-4">
+                        <span className="text-xs font-mono font-bold text-slate-500 uppercase">3. Logical Inevitability of New Concept</span>
+                        <div className="text-base md:text-lg leading-relaxed italic text-slate-950 mt-2 bg-sky-50/50 p-3 rounded border border-sky-100 font-sans font-medium">
+                          <RenderMath text={activeLevel.axiomaticBridge.logicalInevitabilityOfNewConcept} />
+                        </div>
+                      </div>
+                    </div>
+                </section>
+              )}
+
+              {/* TAB SECTION: PHASE 1 (ATOMIC CONCEPTS) */}
+              {selectedTab === 'phase1' && (
+                <section className="space-y-8 animate-fade-in">
+                  <div className="flex items-center gap-2 text-slate-450 border-b border-dashed border-slate-200 pb-2">
+                    <Cpu size={18} className="text-slate-950" />
+                    <h4 className="text-xs font-mono uppercase tracking-widest font-bold">PHASE 1: AXIOMATIC SETUP + SOCRATIC EXPLORATION</h4>
+                  </div>
+
+                  <div className="space-y-12">
+                    {activeLevel.phase1.atomicConcepts.map((concept, cIdx) => (
+                      <div key={concept.id} className="space-y-5 border border-slate-200 rounded p-6 shadow-sm hover:shadow-md transition bg-white">
+                        
+                        {/* Concept Header */}
+                        <div className="flex items-start gap-3 border-b border-slate-100 pb-4">
+                          <span className="w-8 h-8 rounded bg-slate-900 text-white font-mono text-sm flex items-center justify-center shrink-0 font-bold">
+                            {activeLevel.levelNumber}.{cIdx + 1}
+                          </span>
+                          <div>
+                            <h5 className="text-base sm:text-lg md:text-xl font-bold text-slate-950 font-sans tracking-tight">
+                              <RenderMath text={concept.conceptName} />
+                            </h5>
+                            <div className="text-sm sm:text-base text-sky-800 italic mt-1 font-sans font-medium">
+                              <RenderMath text={concept.socraticQuestion} />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Honest Reasoning Journey */}
+                        <div className="space-y-4 pl-4 border-l-2 border-slate-300">
+                          <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider font-extrabold mb-1 block">Deductive Socratic Progress</span>
+                          <div className="space-y-3.5">
+                            {concept.honestReasoning.map((step, sIdx) => {
+                              // Highlighting false turns in deduction
+                              const isWrongTurn = step.toLowerCase().includes('wrong') || step.toLowerCase().includes('wait,') || step.toLowerCase().includes('collapse') || step.toLowerCase().includes('failed');
+                              return (
+                                <div key={sIdx} className={`text-[15px] sm:text-[16px] leading-relaxed ${isWrongTurn ? 'text-red-900 font-sans italic bg-red-50/55 px-4 py-3 border-l-4 border-red-400 rounded-r shadow-xs' : 'text-slate-800 font-sans'}`}>
+                                  <RenderMath text={step} />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Formal Mathematical definition */}
+                        <div className="bg-stone-50 border-l-4 border-slate-900 p-5 rounded-r my-4 space-y-2.5 shadow-sm">
+                          <p className="text-[11px] text-slate-500 uppercase tracking-widest font-black">FORMAL MATHEMATICAL DEFINITION</p>
+                          <div className="leading-relaxed font-serif text-slate-950 text-base sm:text-lg font-medium">
+                            <RenderMath text={concept.formalDefinition} />
+                          </div>
+                        </div>
+
+                        {/* Text-based Scaffolding visualizer */}
+                        {concept.scaffolding && concept.scaffolding.length > 0 && (
+                          <div className="space-y-3">
+                            <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider font-extrabold block">Text-Based Visual Scaffolding</span>
+                            
+                            {concept.scaffolding.map((scaff, scIdx) => (
+                              <div key={scIdx} className="border border-slate-205 bg-slate-50/50 rounded-lg p-5 font-mono text-xs">
+                                <div className="flex justify-between items-center text-[10.5px] text-slate-500 capitalize border-b border-slate-200 pb-1.5 mb-3 font-bold">
+                                  <span>{scaff.title}</span>
+                                  <span className="bg-slate-900 text-white px-2 py-0.5 rounded text-[9px] font-bold tracking-wider">{scaff.type.replace('_', ' ')}</span>
+                                </div>
+
+                                {scaff.type === 'coordinate_table' ? (
+                                  <div className="whitespace-pre-wrap leading-relaxed font-mono text-xs sm:text-sm bg-white p-3 border border-slate-200 overflow-x-auto rounded-md shadow-xs">
+                                    <RenderMath text={scaff.content} />
+                                  </div>
+                                ) : scaff.type === 'numerical_sequence' ? (
+                                  <div className="bg-white p-3 border border-slate-200 rounded-md text-slate-850 leading-relaxed font-mono text-xs sm:text-sm shadow-xs">
+                                    <RenderMath text={scaff.content} />
+                                  </div>
+                                ) : (
+                                  <blockquote className="my-1 border-l-4 border-slate-350 bg-white p-4 italic text-slate-800 leading-relaxed text-sm sm:text-[15px] rounded-r-md shadow-xs">
+                                    <RenderMath text={scaff.content} />
+                                  </blockquote>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                      </div>
+                    ))}
                     </div>
                   </section>
                 )}
 
                 {/* TAB SECTION: PHASE 2 (ABSTRACT CONCEPTUAL TRIALS) */}
                 {selectedTab === 'phase2' && (
-                  <section className="space-y-6 animate-fade-in">
+                  <section className="space-y-8 animate-fade-in">
                     <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-2.5">
                       <div className="flex items-center gap-2">
                         <Hash size={18} className="text-slate-950" />
@@ -1089,103 +1158,32 @@ export default function App() {
                       <p>• Demands analytical integration of all levels simultaneously.</p>
                     </div>
 
-                    <div className="space-y-5">
-                      {activeLevel.phase2.problems.map((prob) => {
-                        const probKey = `${selectedCurriculum.id}-L${activeLevel.levelNumber}-P2-Pr${prob.id}`;
-                        const isExpanded = activeProblemId === probKey;
-                        const hasAnswer = answers[probKey] && answers[probKey].scratchpad;
-                        const evalResult = answers[probKey]?.verificationResult;
-
-                        return (
-                          <div key={prob.id} className="border border-slate-200 rounded hover:border-slate-400 transition overflow-hidden">
-                            
-                            {/* Problem preview row */}
-                            <div 
-                              onClick={() => setActiveProblemId(isExpanded ? null : probKey)}
-                              className="p-4 flex items-center justify-between cursor-pointer bg-slate-50/50 hover:bg-slate-100/50"
-                            >
-                              <div className="flex items-center gap-3 max-w-[85%]">
-                                <span className="font-mono text-xs bg-slate-900 text-white w-12 text-center py-0.5 rounded font-bold shrink-0">
-                                  #{prob.id < 10 ? '0' + prob.id : prob.id}
-                                </span>
-                                <p className="text-xs font-mono truncate text-slate-800 pr-4 italic">{prob.problemText}</p>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                {evalResult ? (
-                                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${evalResult.isCorrect ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
-                                    {evalResult.isCorrect ? 'Rigorous' : 'Friction'}
-                                  </span>
-                                ) : hasAnswer ? (
-                                  <span className="text-[10px] font-mono bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">Drafted</span>
-                                ) : null}
-                                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                              </div>
+                    <div className="space-y-6">
+                      {activeLevel.phase2.problems.map((prob) => (
+                        <div key={prob.id} className="pb-6 border-b border-stone-200/60 last:border-0 space-y-2">
+                          <div className="flex items-start gap-3">
+                            <span className="font-serif font-bold text-stone-900 shrink-0 select-none text-base">
+                              Problem {activeLevel.levelNumber}.{prob.id < 10 ? '0' + prob.id : prob.id}
+                            </span>
+                            <div className="text-base sm:text-[16.5px] leading-relaxed text-stone-904 font-serif">
+                              <RenderMath text={prob.problemText} />
                             </div>
-
-                            {/* Expanded Socratic interactive console */}
-                            {isExpanded && (
-                              <div className="p-5 border-t border-slate-200 space-y-4 bg-white">
-                                <div className="space-y-1.5">
-                                  <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest font-bold">Abstract Challenge Statement</span>
-                                  <p className="text-xs font-mono font-medium text-slate-900 leading-relaxed bg-slate-50 p-3 rounded border border-slate-200">{prob.problemText}</p>
-                                  <p className="text-[9px] font-mono text-sky-700 mt-1">Logical Core Constraint: {prob.logicalCore}</p>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between text-[9.5px] font-mono font-bold text-slate-450 uppercase uppercase">
-                                    <span>Interactive Deduction scratchpad</span>
-                                    <span>BLANK solutions only</span>
-                                  </div>
-                                  
-                                  <textarea 
-                                    placeholder="Write your step-by-step mathematical reasoning. Deduce the logic starting from established Phase 1 axioms..."
-                                    value={answers[probKey]?.scratchpad || ''}
-                                    onChange={(e) => handleScratchpadChange(probKey, e.target.value)}
-                                    className="w-full text-xs font-mono bg-slate-900 text-slate-100 p-3.5 rounded focus:outline-none min-h-[100px] leading-relaxed resize-y border border-slate-750 placeholder:text-slate-600 shadow-inner"
-                                  />
-
-                                  {evalResult && (
-                                    <div className={`p-4 border rounded text-xs leading-relaxed space-y-2 ${evalResult.isCorrect ? 'bg-green-50/70 border-green-300 text-green-800' : 'bg-amber-50/70 border-amber-300 text-amber-800'}`}>
-                                      <div className="flex items-center gap-1.5 font-bold uppercase text-[10px]">
-                                        {evalResult.isCorrect ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-                                        {evalResult.isCorrect ? 'PROVED WITH SOLEMN RIGOR' : 'CONCEPTUAL INCONSISTENCY IN WORK'}
-                                      </div>
-                                      <p>{evalResult.feedback}</p>
-                                    </div>
-                                  )}
-
-                                  <div className="flex justify-end pt-1">
-                                    <button 
-                                      onClick={() => handleSocraticVerify(activeLevel, 2, prob.id, prob.problemText)}
-                                      disabled={verifyingProblemKey === probKey}
-                                      className={`px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition disabled:bg-slate-400`}
-                                    >
-                                      {verifyingProblemKey === probKey ? (
-                                        <>
-                                          <RefreshCw size={12} className="animate-spin" /> Querying Academy...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Sparkles size={12} /> Submit Socratic Proof
-                                        </>
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
                           </div>
-                        );
-                      })}
+                          {prob.logicalCore && (
+                            <div className="pl-6 text-[11px] font-mono tracking-wide text-slate-500 uppercase flex items-center gap-1">
+                              <span className="font-semibold text-slate-400">Core Constraint:</span>
+                              <RenderMath text={prob.logicalCore} />
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </section>
                 )}
 
                 {/* TAB SECTION: PHASE 3 (DEEP REAL-WORLD SYSTEM APPLICATION) */}
                 {selectedTab === 'phase3' && (
-                  <section className="space-y-6 animate-fade-in">
+                  <section className="space-y-8 animate-fade-in">
                     <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-2.5">
                       <div className="flex items-center gap-2">
                         <Sparkles size={18} className="text-slate-950" />
@@ -1203,112 +1201,36 @@ export default function App() {
                       <p>• Zero heavy background technical domain jargon bottlenecks.</p>
                     </div>
 
-                    <div className="space-y-5">
-                      {activeLevel.phase3.problems.map((prob) => {
-                        const probKey = `${selectedCurriculum.id}-L${activeLevel.levelNumber}-P3-Pr${prob.id}`;
-                        const isExpanded = activeProblemId === probKey;
-                        const hasAnswer = answers[probKey] && answers[probKey].scratchpad;
-                        const evalResult = answers[probKey]?.verificationResult;
-
-                        return (
-                          <div key={prob.id} className="border border-slate-200 rounded hover:border-slate-400 transition overflow-hidden">
-                            
-                            <div 
-                              onClick={() => setActiveProblemId(isExpanded ? null : probKey)}
-                              className="p-4 flex items-center justify-between cursor-pointer bg-slate-50/50 hover:bg-slate-100/50"
-                            >
-                              <div className="flex items-center gap-3 max-w-[85%]">
-                                <span className="font-mono text-xs bg-slate-900 text-white w-12 text-center py-0.5 rounded font-bold shrink-0">
-                                  #{prob.id < 10 ? '0' + prob.id : prob.id}
-                                </span>
-                                <p className="text-xs font-sans truncate text-slate-800 pr-4 font-semibold">{prob.scenario}</p>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                {evalResult ? (
-                                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${evalResult.isCorrect ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
-                                    {evalResult.isCorrect ? 'Rigorous' : 'Axiom Friction'}
-                                  </span>
-                                ) : hasAnswer ? (
-                                  <span className="text-[10px] font-mono bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">Formulated</span>
-                                ) : null}
-                                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                              </div>
-                            </div>
-
-                            {isExpanded && (
-                              <div className="p-5 border-t border-slate-200 space-y-4 bg-white">
-                                
-                                <div className="space-y-2 text-xs">
-                                  <div className="bg-slate-50 border p-4 rounded-md space-y-3">
-                                    <div>
-                                      <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest font-bold">1. Physical Premises Context</span>
-                                      <p className="text-slate-800 leading-relaxed font-sans">{prob.scenario}</p>
-                                    </div>
-
-                                    <div>
-                                      <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest font-bold">2. Rigorous Algebraic Constraints Matrix</span>
-                                      <ul className="list-disc pl-4 space-y-1 text-slate-700 font-mono text-[11px] mt-1">
-                                        {prob.constraints.map((constraint, conIdx) => (
-                                          <li key={conIdx}>{constraint}</li>
-                                        ))}
-                                      </ul>
-                                    </div>
-
-                                    <div className="border-t border-slate-200 pt-3">
-                                      <span className="text-[9px] font-mono text-slate-400 uppercase tracking-widest font-bold block mb-0.5">3. Quantitative Synthesis Query</span>
-                                      <p className="text-slate-900 leading-relaxed font-bold font-mono text-xs">{prob.problemText}</p>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between text-[9.5px] font-mono font-bold text-slate-450 uppercase uppercase">
-                                    <span>Interactive Synthesis workspace</span>
-                                  </div>
-                                  
-                                  <textarea 
-                                    placeholder="Execute your mathematical transformations. Establish formulas, verify system bounds, and deduce precise calculations step-by-step..."
-                                    value={answers[probKey]?.scratchpad || ''}
-                                    onChange={(e) => handleScratchpadChange(probKey, e.target.value)}
-                                    className="w-full text-xs font-mono bg-slate-900 text-slate-100 p-3.5 rounded focus:outline-none min-h-[100px] leading-relaxed resize-y border border-slate-750 placeholder:text-slate-600 shadow-inner"
-                                  />
-
-                                  {evalResult && (
-                                    <div className={`p-4 border rounded text-xs leading-relaxed space-y-2 ${evalResult.isCorrect ? 'bg-green-50/70 border-green-300 text-green-800' : 'bg-amber-50/70 border-amber-300 text-amber-800'}`}>
-                                      <div className="flex items-center gap-1.5 font-bold uppercase text-[10px]">
-                                        {evalResult.isCorrect ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
-                                        {evalResult.isCorrect ? 'SYNTHESIS VERIFIED SUCCESSFULLY' : 'INCOMPLETE EQUILIBRIUM IN PROOF'}
-                                      </div>
-                                      <p>{evalResult.feedback}</p>
-                                    </div>
-                                  )}
-
-                                  <div className="flex justify-end pt-1">
-                                    <button 
-                                      onClick={() => handleSocraticVerify(activeLevel, 3, prob.id, `${prob.scenario} Constraints: ${prob.constraints.join(', ')} Question: ${prob.problemText}`)}
-                                      disabled={verifyingProblemKey === probKey}
-                                      className={`px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1.5 transition disabled:bg-slate-400`}
-                                    >
-                                      {verifyingProblemKey === probKey ? (
-                                        <>
-                                          <RefreshCw size={12} className="animate-spin" /> Evaluating Synthesis...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Sparkles size={12} /> Socratic Synthesis Review
-                                        </>
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-
-                              </div>
-                            )}
-
+                    <div className="space-y-10">
+                      {activeLevel.phase3.problems.map((prob) => (
+                        <div key={prob.id} className="pb-10 border-b border-stone-200 last:border-0 space-y-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono tracking-widest uppercase font-bold text-slate-500">Problem {activeLevel.levelNumber}.{prob.id < 10 ? '0' + prob.id : prob.id}</span>
                           </div>
-                        );
-                      })}
+
+                          <div className="text-base sm:text-[17px] text-stone-900 font-serif leading-relaxed font-normal">
+                            <RenderMath text={prob.scenario} />
+                          </div>
+
+                          <div className="bg-stone-50/50 border-l-2 border-stone-300 pl-4 py-1.5 space-y-1.5 my-3">
+                            <span className="text-[10px] font-mono font-bold text-stone-500 uppercase tracking-widest block">System Constraints</span>
+                            <ul className="list-disc pl-4 space-y-1 text-sm sm:text-[14.5px] text-stone-800 font-serif font-light">
+                              {prob.constraints.map((constraint, conIdx) => (
+                                <li key={conIdx}>
+                                  <RenderMath text={constraint} />
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div className="text-[15.5px] sm:text-[16.5px] font-serif font-bold italic text-slate-950 leading-relaxed pt-1 flex items-start gap-1">
+                            <span className="text-slate-500 shrink-0 not-italic uppercase font-mono text-[11px] tracking-wider mt-1 mr-1">Query:</span>
+                            <div className="flex-1 text-slate-950">
+                              <RenderMath text={prob.problemText} />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </section>
                 )}

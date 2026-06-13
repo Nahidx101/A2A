@@ -40,6 +40,39 @@ function getGeminiClient(): GoogleGenAI {
   return aiClient;
 }
 
+// Resilient content generation with helper retries for 503 High Demand spiked traffic
+async function generateWithRetry(ai: GoogleGenAI, params: any, maxRetries = 3, baseDelayMs = 2000): Promise<any> {
+  let attempt = 0;
+  while (true) {
+    try {
+      const response = await ai.models.generateContent(params);
+      return response;
+    } catch (error: any) {
+      attempt++;
+      const errorMessage = String(error.message || '').toLowerCase();
+      const errorCode = error.status || error.code || 0;
+      
+      const is503 = errorCode === 503 || 
+                    errorMessage.includes('503') || 
+                    errorMessage.includes('demand') || 
+                    errorMessage.includes('unavailable') || 
+                    errorMessage.includes('capacity') ||
+                    errorMessage.includes('overloaded') ||
+                    errorMessage.includes('overworked') ||
+                    errorMessage.includes('resource exhausted') ||
+                    errorMessage.includes('rate limit');
+
+      if (is503 && attempt < maxRetries) {
+        const delay = baseDelayMs * attempt;
+        console.warn(`[Gemini API] 503/High-demand warning on attempt ${attempt}/${maxRetries}. Retrying in ${delay}ms... Error: ${errorMessage}`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 // In-memory / File-system storage for rebuilt Custom Curriculums
 const CUSTOM_DIR = path.resolve('./src/data/custom');
 if (!fs.existsSync(CUSTOM_DIR)) {
@@ -165,7 +198,14 @@ CHAPTER DECOMPOSITION & LEVEL RULES:
      - L3 Phase 3: 20 problems
      - Simple 1-sentence physical scenario for non-experts, followed by deep math constraints and a specific question.
 5. All problems must have EMPTY solutions (blank answer fields for students).
-6. Use cold, precise, engineering tone. Avoid filler or encouragement.`;
+6. Use cold, precise, engineering tone. Avoid filler or encouragement.
+7. MATHEMATICAL RIGOR & LATEX RULES:
+   - ALL equations, variables, constants, functions, coordinates, vectors, intervals, or mathematical operations MUST be wrapped in standard LaTeX markup.
+   - Inline math (variables e.g. $x$, $y$, Greek letters e.g. $\theta$, $\Delta$, simple operations) MUST be enclosed in single dollar signs like $a \times b$ or $x^2 + y^2 = r^2$.
+   - Never write plain text math variables like "theta", "thetaa", "x", "y". Write them strictly as $\theta$, $x$, $y$.
+   - Never use "*" for multiplication. Use $\times$ or $\cdot$ in LaTeX.
+   - Block equations and formulas MUST be enclosed in double dollar signs like $$\int_{a}^{b} f(x) dx = F(b) - F(a)$$.
+   - Ensure all scaffoldings, concept definitions, trials, and application constraints conform fully to these LaTeX rules outputting publication-grade formatting.`;
 
     // Structured output schema matching Types interface
     const responseSchema = {
@@ -274,7 +314,7 @@ CHAPTER DECOMPOSITION & LEVEL RULES:
 
     parts.push({ text: userPrompt });
 
-    const response = await ai.models.generateContent({
+    const response = await generateWithRetry(ai, {
       model: "gemini-3.5-flash",
       contents: parts,
       config: {
@@ -302,7 +342,13 @@ CHAPTER DECOMPOSITION & LEVEL RULES:
     return res.json({ success: true, curriculum: reconstructed });
   } catch (err: any) {
     console.error("Reconstruction failure:", err);
-    return res.status(500).json({ success: false, error: err.message || "Failed during curriculum reconstruction process." });
+    let errorMsg = err.message || "Failed during curriculum reconstruction process.";
+    const errText = String(err.message || '').toLowerCase();
+    
+    if (errText.includes('503') || errText.includes('demand') || errText.includes('unavailable') || errText.includes('rate limit') || errText.includes('exhausted')) {
+      errorMsg = "The Gemini AI service is currently experiencing high demand. We initiated 3 automatic retries, but servers remain fully overloaded. Please wait a moment and click 'Trigger Engine' again to try again.";
+    }
+    return res.status(500).json({ success: false, error: errorMsg });
   }
 });
 
@@ -344,7 +390,7 @@ app.post('/api/verify-answer', async (req, res) => {
       required: ["isCorrect", "feedback"]
     };
 
-    const response = await ai.models.generateContent({
+    const response = await generateWithRetry(ai, {
       model: "gemini-3.5-flash",
       contents: promptText,
       config: {
@@ -358,7 +404,13 @@ app.post('/api/verify-answer', async (req, res) => {
     return res.json({ success: true, evaluation: parsed });
   } catch (err: any) {
     console.error("Socratic verification failure:", err);
-    return res.status(500).json({ success: false, error: err.message || "Failed Socratic analysis." });
+    let errorMsg = err.message || "Failed Socratic analysis.";
+    const errText = String(err.message || '').toLowerCase();
+    
+    if (errText.includes('503') || errText.includes('demand') || errText.includes('unavailable') || errText.includes('rate limit') || errText.includes('exhausted')) {
+      errorMsg = "Socratic Assessment was interrupted by a temporary high API load on the Gemini servers. Please try submitting your proof again in a couple of seconds.";
+    }
+    return res.status(500).json({ success: false, error: errorMsg });
   }
 });
 
